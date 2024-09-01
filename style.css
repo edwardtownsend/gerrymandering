@@ -38,18 +38,28 @@ body {
     z-index: 0; /* Ensure canvas stays behind the dots */
 }
 
-/* Dot styling */
 .dot {
-    width: 50px;
-    height: 50px;
+    width: 50px; /* Match dotSize */
+    height: 50px; /* Match dotSize */
     background-color: lightgray;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 100px; 
-    color: black; 
+    font-size: 16px; /* Adjust as needed */
+    color: black; /* Text color */
     text-align: center;
+    position: relative;
+}
+
+.dot::before {
+    content: attr(data-population);
+    position: absolute;
+    top: -20px; /* Adjust as needed */
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 20px; /* Adjust as needed */
+    color: black;
 }
 
 /* Button styling */
