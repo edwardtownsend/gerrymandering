@@ -59,6 +59,7 @@ const colors = Array.from({ length: popSize }, (_, i) => {
 const colorPopulations = {};
 const currDir = {};
 const localBestPos = {};
+let globalBestPos = [[-1,-1], -Infinity];
 
 // Randomly select popSize dots and assign them unique colors
 const coloredDots = [];
@@ -72,7 +73,7 @@ while (coloredDots.length < popSize) {
 
         // Initialize currDir and localBestPos
         colorPopulations[color] = parseInt(dots[randomIndex].dataset.population, 10);
-        currDir[color] = [1, 1];
+        currDir[color] = [0, 0];
         const row = Math.floor(randomIndex / gridSize);
         const col = randomIndex % gridSize;
         localBestPos[color] = [[row, col], colorPopulations[color]];
@@ -87,14 +88,21 @@ function nextIteration() {
         colorPopulations[color] = 0;
     });
 
+    for (const [pos, pop] of Object.values(localBestPos)) {
+        if (pop > globalBestPos[1]) {
+            globalBestPos = [pos, pop];
+        }
+    }
     coloredDots.forEach((i, index) => {
         const color = dots[i].style.backgroundColor;
 
         const currPos = [Math.floor(i / gridSize), i % gridSize];
         const [localBestRow, localBestCol] = localBestPos[color][0];
+        const [globalBestRow, globalBestCol] = globalBestPos[0];
 
         const localBestPosDir = [localBestRow - currPos[0], localBestCol - currPos[1]];
-        const moveDirection = currDir[color].map((val, idx) => val + localBestPosDir[idx]);
+        const globalBestPosDir = [globalBestRow - currPos[0], globalBestCol - currPos[1]];
+        const moveDirection = [currDir[color][0] + 8*localBestPosDir[0] + globalBestPosDir[0], currDir[color][1] + 8*localBestPosDir[1] + globalBestPosDir[1]];
 
         const constrainedMove = moveDirection.map(val => Math.max(-1, Math.min(1, val)));
         const newIndex = (currPos[0] + constrainedMove[0]) * gridSize + (currPos[1] + constrainedMove[1]);
