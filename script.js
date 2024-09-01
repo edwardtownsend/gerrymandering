@@ -3,7 +3,7 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 const gridSize = 10;
-const popSize = 8;
+const popSize = 10;
 const dotSize = 50;  // Diameter of the dot
 const gridGap = 100; // Gap between the dots
 
@@ -13,7 +13,7 @@ canvas.height = (dotSize + gridGap) * (gridSize - 1) + dotSize;
 
 // Create the grid of dots
 const dots = [];
-for (let i = 0; i < gridSize**2; i++) {
+for (let i = 0; i < gridSize ** 2; i++) {
     const dot = document.createElement('div');
     dot.className = 'dot';
     dot.style.position = 'relative'; // Position for the population label
@@ -26,7 +26,7 @@ for (let i = 0; i < gridSize**2; i++) {
 const colors = Array.from({ length: popSize }, (_, i) => {
     // Calculate hue to ensure distinct colors
     const hue = (i * 360 / popSize) % 360;
-    // Convert HSL to RGB
+    // Convert HSL to RGB (unchanged as per your request)
     const hslToRgb = (h, s, l) => {
         s /= 100;
         l /= 100;
@@ -55,34 +55,58 @@ const colors = Array.from({ length: popSize }, (_, i) => {
     return hslToRgb(hue, 100, 50); // Use full saturation and lightness for vivid colors
 });
 
-function changeColors() {
-    // Reset all dots to lightgray and clear previous content
-    dots.forEach(dot => {
-        dot.style.backgroundColor = 'lightgray';
-        dot.textContent = '';
-    });
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous links and circles
+// Track color counts and populations
+const colorPopulations = {};
+const currDir = {};
+const localBestPos = {};
 
-    // Track color counts and populations
-    const colorCounts = {};
-    const colorPopulations = {};
+// Randomly select popSize dots and assign them unique colors
+const coloredDots = [];
+while (coloredDots.length < popSize) {
+    const randomIndex = Math.floor(Math.random() * gridSize ** 2);
+    if (!coloredDots.includes(randomIndex)) {
+        const color = colors[coloredDots.length];
+        coloredDots.push(randomIndex);
 
-    // Randomly select popSize dots and assign them unique colors
-    const coloredDots = [];
-    let i = 0;
-    while (coloredDots.length < popSize) {
-        const randomIndex = Math.floor(Math.random() * gridSize**2);
-        if (!coloredDots.includes(randomIndex)) {
-            coloredDots.push(randomIndex);
-            const color = colors[i];
-            i += 1;
-            // Assign color to the colored dots
-            dots[randomIndex].style.backgroundColor = color;
+        dots[randomIndex].style.backgroundColor = color;
 
-            // Initialize population count for this color
-            colorPopulations[color] = 0;
-        }
+        // Initialize currDir and localBestPos
+        colorPopulations[color] = parseInt(dots[randomIndex].dataset.population, 10);
+        currDir[color] = [0, 0];
+        const row = Math.floor(randomIndex / gridSize);
+        const col = randomIndex % gridSize;
+        localBestPos[color] = [[row, col], colorPopulations[color]];
     }
+}
+
+console.log(localBestPos)
+
+function nextIteration() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous links
+
+    // Reset color populations at the beginning of each iteration
+    Object.keys(colorPopulations).forEach(color => {
+        colorPopulations[color] = 0;
+    });
+
+    coloredDots.forEach((i, index) => {
+        const color = dots[i].style.backgroundColor;
+
+        const currPos = [Math.floor(i / gridSize), i % gridSize];
+        const [localBestRow, localBestCol] = localBestPos[color][0];
+
+        const localBestPosDir = [localBestRow - currPos[0], localBestCol - currPos[1]];
+        const moveDirection = currDir[color].map((val, idx) => val + localBestPosDir[idx] + Math.round(Math.random()));
+
+        const constrainedMove = moveDirection.map(val => Math.max(-1, Math.min(1, val)));
+        const newIndex = (currPos[0] + constrainedMove[0]) * gridSize + (currPos[1] + constrainedMove[1]);
+
+        if (newIndex >= 0 && newIndex < gridSize ** 2 && !coloredDots.includes(newIndex)) {
+            coloredDots[index] = newIndex;
+            dots[newIndex].style.backgroundColor = color;
+        }
+        currDir[color] = constrainedMove;
+    });
 
     // Assign each uncolored dot the color of its closest colored dot, display distance, and update populations
     dots.forEach((dot, index) => {
@@ -91,30 +115,37 @@ function changeColors() {
             const color = dots[closestColoredDot].style.backgroundColor;
             dot.style.backgroundColor = color;
 
-            // Calculate and display distance
             const dotRow = Math.floor(index / gridSize);
             const dotCol = index % gridSize;
             const closestRow = Math.floor(closestColoredDot / gridSize);
             const closestCol = closestColoredDot % gridSize;
-            const distance = Math.sqrt((dotRow - closestRow) ** 2 + (dotCol - closestCol) ** 2); // Euclidean distance
+            const distance = Math.sqrt((dotRow - closestRow) ** 2 + (dotCol - closestCol) ** 2);
 
-            dot.textContent = `${Math.round(distance)}`; // Display rounded distance inside the dot
+            dot.textContent = `${Math.round(distance * 10) / 10}`;  // Display rounded distance inside the dot
 
-            // Update color count and population
-            colorCounts[color] = (colorCounts[color] || 0) + 1;
-            colorPopulations[color] += parseInt(dot.dataset.population, 10); // Sum of populations
-            drawLink(index, closestColoredDot); // Draw link to the closest colored dot
+            colorPopulations[color] += parseInt(dot.dataset.population, 10);
+            drawLink(index, closestColoredDot);
         } else {
-            // Update population for colored dots
-            colorPopulations[dots[index].style.backgroundColor] += parseInt(dots[index].dataset.population, 10);
+            dot.textContent = `0`;
+            colorPopulations[dots[index].style.backgroundColor] += parseInt(dot.dataset.population, 10);
         }
     });
-
-    // Update color counts display
     updateColorCounts(colorPopulations);
+
+    // Update localBestPos
+    coloredDots.forEach((i, _) => {
+        const color = dots[i].style.backgroundColor;
+        const pop = colorPopulations[color];
+        console.log(color)
+        console.log(localBestPos)
+        if (pop > localBestPos[color][1]) {
+            const row = Math.floor(i / gridSize);
+            const col = i % gridSize;
+            localBestPos[color] = [[row, col], pop]; // Update only for this color
+        }
+    });
 }
 
-// Calculate the closest colored dot to a given uncolored dot
 function findClosestColoredDot(index, coloredDots) {
     const row = Math.floor(index / gridSize);
     const col = index % gridSize;
@@ -124,23 +155,19 @@ function findClosestColoredDot(index, coloredDots) {
     coloredDots.forEach(coloredIndex => {
         const coloredRow = Math.floor(coloredIndex / gridSize);
         const coloredCol = coloredIndex % gridSize;
-        const distance = Math.sqrt((coloredRow - row) ** 2 + (coloredCol - col) ** 2); // Euclidean distance
+        const distance = Math.sqrt((coloredRow - row) ** 2 + (coloredCol - col) ** 2);
 
         if (distance < minDistance) {
             minDistance = distance;
             closestDot = coloredIndex;
-        } else if (distance === minDistance) {
-            // Randomly choose if two distances are the same
-            if (Math.random() > 0.5) {
-                closestDot = coloredIndex;
-            }
+        } else if (distance === minDistance && Math.random() > 0.5) {
+            closestDot = coloredIndex;
         }
     });
 
     return closestDot;
 }
 
-// Draw a link between two dots
 function drawLink(fromIndex, toIndex) {
     const fromRow = Math.floor(fromIndex / gridSize);
     const fromCol = fromIndex % gridSize;
@@ -160,7 +187,6 @@ function drawLink(fromIndex, toIndex) {
     ctx.stroke();
 }
 
-// Function to update the color counts display
 function updateColorCounts(colorPopulations) {
     const colorCountsDiv = document.getElementById('color-counts');
     colorCountsDiv.innerHTML = ''; // Clear previous counts
