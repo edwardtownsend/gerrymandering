@@ -3,7 +3,7 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 const gridSize = 10;
-const popSize = 10;
+const popSize = 5;
 const dotSize = 50;  // Diameter of the dot
 const gridGap = 100; // Gap between the dots
 
@@ -16,6 +16,7 @@ const dots = [];
 for (let i = 0; i < gridSize ** 2; i++) {
     const dot = document.createElement('div');
     dot.className = 'dot';
+    dot.textContent = `0`;
     dot.style.position = 'relative'; // Position for the population label
     dot.dataset.population = Math.floor(Math.random() * 100) + 1; // Random population value between 1 and 100
     grid.appendChild(dot);
@@ -81,6 +82,13 @@ while (coloredDots.length < popSize) {
 }
 
 function nextIteration() {
+    max_dist = [0, -1]
+    dots.forEach((dot, index) => {
+        dist = parseInt(dot.textContent, 10);
+        if (dist > max_dist[0]) {
+            max_dist = [dist, index];
+        }
+    }); 
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous links
 
     // Reset color populations at the beginning of each iteration
@@ -100,11 +108,26 @@ function nextIteration() {
         const [localBestRow, localBestCol] = localBestPos[color][0];
         const [globalBestRow, globalBestCol] = globalBestPos[0];
 
+        let distDir;
+
+        if (max_dist[0] !== 0) {
+            const distRow = Math.floor(max_dist[1] / gridSize);
+            const distCol = max_dist[1] % gridSize;
+            distDir = [distRow - currPos[0], distCol - currPos[1]];
+        } else {
+            distDir = [0, 0];
+        }
+        console.log(distDir)
+
         const localBestPosDir = [localBestRow - currPos[0], localBestCol - currPos[1]];
         const globalBestPosDir = [globalBestRow - currPos[0], globalBestCol - currPos[1]];
-        const moveDirection = [currDir[color][0] + 8*localBestPosDir[0] + globalBestPosDir[0], currDir[color][1] + 8*localBestPosDir[1] + globalBestPosDir[1]];
 
-        const constrainedMove = moveDirection.map(val => Math.max(-1, Math.min(1, val)));
+        const moveDir = [
+            currDir[color][0] + localBestPosDir[0] + globalBestPosDir[0] + distDir[0],
+            currDir[color][1] + localBestPosDir[1] + globalBestPosDir[1] + distDir[1]
+        ];
+
+        const constrainedMove = moveDir.map(val => Math.max(-2, Math.min(2, val)));
         const newIndex = (currPos[0] + constrainedMove[0]) * gridSize + (currPos[1] + constrainedMove[1]);
 
         if (newIndex >= 0 && newIndex < gridSize ** 2 && !coloredDots.includes(newIndex)) {
