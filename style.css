@@ -1,4 +1,8 @@
 /* Center the grid, canvas, and button */
+:root {
+    --gridSize: 10;
+}
+
 body {
     display: flex;
     flex-direction: column;
@@ -20,7 +24,7 @@ body {
 /* Grid styling */
 #grid {
     display: grid;
-    grid-template-columns: repeat(5, 50px);
+    grid-template-columns: repeat(var(--gridSize), 50px);
     grid-gap: 100px; /* Increase grid gap to 100px */
     position: relative;
     z-index: 1;
@@ -51,7 +55,6 @@ button {
     background-color: #4CAF50;
     color: white;
     cursor: pointer;
-    transition: background-color 0.3s;
     margin-top: 20px; /* Add space between grid and button */
     display: block;
 }
