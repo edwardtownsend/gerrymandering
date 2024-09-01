@@ -3,7 +3,7 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 const gridSize = 10;
-const popSize = 5;
+const popSize = 15;
 const dotSize = 50;  // Diameter of the dot
 const gridGap = 100; // Gap between the dots
 
@@ -27,13 +27,21 @@ const colors = Array.from({ length: popSize }, (_, i) => {
 });
 
 function changeColors() {
-    // Reset all dots to lightgray
+    // Reset all dots to lightgray and clear previous content
     dots.forEach(dot => {
         dot.style.backgroundColor = 'lightgray';
+        dot.textContent = ''; // Clear previous distance text
+        dot.style.fontSize = '36px'; // Adjust text size
+        dot.style.display = 'flex';
+        dot.style.alignItems = 'center';
+        dot.style.justifyContent = 'center';
     });
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous links and circles
 
-    // Randomly select gridSize dots and assign them unique colors
+    // Track color counts
+    const colorCounts = {};
+
+    // Randomly select popSize dots and assign them unique colors
     const coloredDots = [];
     const usedColors = [];
     while (coloredDots.length < popSize) {
@@ -50,16 +58,32 @@ function changeColors() {
         }
     }
 
-    // Assign each uncolored dot the color of its closest colored dot and draw links
+    // Assign each uncolored dot the color of its closest colored dot and display distance
     dots.forEach((dot, index) => {
         if (!coloredDots.includes(index)) {
             const closestColoredDot = findClosestColoredDot(index, coloredDots);
             const color = dots[closestColoredDot].style.backgroundColor;
             dot.style.backgroundColor = color;
+
+            // Calculate and display distance
+            const dotRow = Math.floor(index / gridSize);
+            const dotCol = index % gridSize;
+            const closestRow = Math.floor(closestColoredDot / gridSize);
+            const closestCol = closestColoredDot % gridSize;
+            const distance = Math.sqrt((dotRow - closestRow) ** 2 + (dotCol - closestCol) ** 2); // Euclidean distance
+
+            dot.textContent = Math.round(distance); // Display rounded distance inside the dot
+
+            // Update color count
+            colorCounts[color] = (colorCounts[color] || 0) + 1;
             drawLink(index, closestColoredDot); // Draw link to the closest colored dot
         }
     });
+
+    // Update color counts display
+    updateColorCounts(colorCounts);
 }
+
 
 // Calculate the closest colored dot to a given uncolored dot
 function findClosestColoredDot(index, coloredDots) {
@@ -71,7 +95,7 @@ function findClosestColoredDot(index, coloredDots) {
     coloredDots.forEach(coloredIndex => {
         const coloredRow = Math.floor(coloredIndex / gridSize);
         const coloredCol = coloredIndex % gridSize;
-        const distance = Math.sqrt(Math.abs(coloredRow - row)**2 + Math.abs(coloredCol - col)**2); // Diagonal distance metric
+        const distance = Math.sqrt((coloredRow - row) ** 2 + (coloredCol - col) ** 2); // Euclidean distance
 
         if (distance < minDistance) {
             minDistance = distance;
@@ -105,4 +129,16 @@ function drawLink(fromIndex, toIndex) {
     ctx.strokeStyle = 'red';  // Color of the link
     ctx.lineWidth = 2;
     ctx.stroke();
+}
+
+// Function to update the color counts display
+function updateColorCounts(colorCounts) {
+    const colorCountsDiv = document.getElementById('color-counts');
+    colorCountsDiv.innerHTML = ''; // Clear previous counts
+
+    Object.entries(colorCounts).forEach(([color, count]) => {
+        const colorDiv = document.createElement('div');
+        colorDiv.innerHTML = `<span style="color: ${color};">Color ${color}</span>: <span style="color: black;">${count} dots</span>`;
+        colorCountsDiv.appendChild(colorDiv);
+    });
 }
