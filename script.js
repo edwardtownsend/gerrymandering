@@ -72,14 +72,12 @@ while (coloredDots.length < popSize) {
 
         // Initialize currDir and localBestPos
         colorPopulations[color] = parseInt(dots[randomIndex].dataset.population, 10);
-        currDir[color] = [0, 0];
+        currDir[color] = [1, 1];
         const row = Math.floor(randomIndex / gridSize);
         const col = randomIndex % gridSize;
         localBestPos[color] = [[row, col], colorPopulations[color]];
     }
 }
-
-console.log(localBestPos)
 
 function nextIteration() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous links
@@ -96,7 +94,7 @@ function nextIteration() {
         const [localBestRow, localBestCol] = localBestPos[color][0];
 
         const localBestPosDir = [localBestRow - currPos[0], localBestCol - currPos[1]];
-        const moveDirection = currDir[color].map((val, idx) => val + localBestPosDir[idx] + Math.round(Math.random()));
+        const moveDirection = currDir[color].map((val, idx) => val + localBestPosDir[idx]);
 
         const constrainedMove = moveDirection.map(val => Math.max(-1, Math.min(1, val)));
         const newIndex = (currPos[0] + constrainedMove[0]) * gridSize + (currPos[1] + constrainedMove[1]);
@@ -136,8 +134,6 @@ function nextIteration() {
     coloredDots.forEach((i, _) => {
         const color = dots[i].style.backgroundColor;
         const pop = colorPopulations[color];
-        console.log(color)
-        console.log(localBestPos)
         if (pop > localBestPos[color][1]) {
             const row = Math.floor(i / gridSize);
             const col = i % gridSize;
