@@ -1,0 +1,61 @@
+/* Center the grid, canvas, and button */
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+}
+
+/* Container styling */
+#container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 40px; /* Add some margin to separate grid and button */
+}
+
+/* Grid styling */
+#grid {
+    display: grid;
+    grid-template-columns: repeat(5, 50px);
+    grid-gap: 100px; /* Increase grid gap to 100px */
+    position: relative;
+    z-index: 1;
+}
+
+/* Canvas styling */
+#canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0; /* Ensure canvas stays behind the dots */
+}
+
+/* Dot styling */
+.dot {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: lightgray;
+}
+
+/* Button styling */
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 25px;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 20px; /* Add space between grid and button */
+    display: block;
+}
+
+button:hover {
+    background-color: #45a049;
+}
